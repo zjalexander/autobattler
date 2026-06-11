@@ -341,16 +341,18 @@ function render(force = false) {
   const level = getCurrentLevel(balance, state);
   const nextLevel = getNextLevel(balance, state);
   const roundMs = balance.economy.roundSeconds * 1000;
+  const boardCount = boardUnitCount();
+  const combatReady = boardCount > 0;
 
   els.gold.textContent = formatNumber(state.run.gold);
   els.level.textContent = state.run.level;
   els.stage.textContent = state.run.stage;
   els.prestigePoints.textContent = state.prestige.points;
-  els.roundProgress.value = Math.min(1, state.run.roundProgressMs / roundMs);
-  els.roundLabel.textContent = `Stage round ${state.run.round} resolves automatically`;
+  els.roundProgress.value = combatReady ? Math.min(1, state.run.roundProgressMs / roundMs) : 0;
+  els.roundLabel.textContent = combatReady ? `Stage round ${state.run.round} resolves automatically` : "Field a unit to start combat";
   els.xpLabel.textContent = nextLevel
-    ? `XP ${formatNumber(state.run.xp)} / ${formatNumber(nextLevel.xpRequired)} | Board ${boardUnitCount()} / ${level.boardCap}`
-    : `Max level | Board ${boardUnitCount()} / ${level.boardCap}`;
+    ? `XP ${formatNumber(state.run.xp)} / ${formatNumber(nextLevel.xpRequired)} | Board ${boardCount} / ${level.boardCap}`
+    : `Max level | Board ${boardCount} / ${level.boardCap}`;
   els.xpButton.disabled = state.run.gold < balance.economy.xpBuyCost || !nextLevel;
   els.xpButton.textContent = `XP ${balance.economy.xpBuyCost}g`;
   els.rerollButton.disabled = state.run.gold < balance.economy.rerollCost;
@@ -517,7 +519,7 @@ function renderRecap() {
         <tr><th>Attacks</th><td>${recap.attackEvents?.length ?? 0}</td></tr>
       </tbody>
     </table>
-  ` : `<p class="subtle">First combat is resolving automatically.</p>`;
+  ` : `<p class="subtle">${boardUnitCount() === 0 ? "Field a unit to start combat." : "First combat is resolving automatically."}</p>`;
   const log = state.run.combatLog.length
     ? `<ul class="log-list">${state.run.combatLog.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>`
     : "";

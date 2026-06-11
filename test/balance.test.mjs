@@ -78,6 +78,31 @@ test("continuous combat advances exact rounds from elapsed time", async () => {
   assert.ok(state.run.gold >= 0);
 });
 
+test("combat does not start with an empty board", async () => {
+  const balance = await loadTestBalance();
+  const state = createInitialState(balance);
+  state.run.stage = 5;
+  state.run.round = 3;
+  state.run.totalRounds = 8;
+  state.run.roundProgressMs = balance.economy.roundSeconds * 1000 - 1;
+  const beforeGold = state.run.gold;
+
+  const result = processElapsed(state, balance, balance.economy.roundSeconds * 1000 * 3);
+  assert.equal(result.rounds, 0);
+  assert.equal(result.goldDelta, 0);
+  assert.equal(result.stageDelta, 0);
+  assert.equal(state.run.stage, 5);
+  assert.equal(state.run.round, 3);
+  assert.equal(state.run.totalRounds, 8);
+  assert.equal(state.run.roundProgressMs, 0);
+  assert.equal(state.run.gold, beforeGold);
+
+  assert.equal(runCombatRound(state, balance), null);
+  assert.equal(state.run.stage, 5);
+  assert.equal(state.run.round, 3);
+  assert.equal(state.run.totalRounds, 8);
+});
+
 test("stage round counter resets on stage win and stage loss", async () => {
   const balance = await loadTestBalance();
   const state = createInitialState(balance);
@@ -96,12 +121,11 @@ test("stage round counter resets on stage win and stage loss", async () => {
   assert.equal(state.run.stage, 4);
   assert.equal(state.run.round, 1);
 
-  state.run.board = [null, null, null, null, null, null];
-  state.run.stage = 4;
+  state.run.stage = 15;
   state.run.round = 5;
   const lossRecap = runCombatRound(state, balance);
   assert.equal(lossRecap.won, false);
-  assert.equal(state.run.stage, 3);
+  assert.equal(state.run.stage, 14);
   assert.equal(state.run.round, 1);
 });
 

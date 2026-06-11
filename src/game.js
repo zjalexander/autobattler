@@ -288,6 +288,16 @@ export function applyActiveItemStats(stats, state, balance) {
 
 export function processElapsed(state, balance, elapsedMs, options = {}) {
   const before = snapshotProgress(state);
+  if (boardUnitCount(state) === 0) {
+    state.run.roundProgressMs = 0;
+    return {
+      rounds: 0,
+      goldDelta: state.run.gold - before.gold,
+      stageDelta: state.run.stage - before.stage,
+      itemDelta: state.run.items.length - before.items,
+    };
+  }
+
   const roundMs = balance.economy.roundSeconds * 1000;
   const maxRounds = options.maxRounds ?? Infinity;
   let rounds = 0;
@@ -322,6 +332,8 @@ export function processOffline(state, balance, now = Date.now()) {
 }
 
 export function runCombatRound(state, balance) {
+  if (boardUnitCount(state) === 0) return null;
+
   const teamPower = computeTeamPower(state, balance);
   const stage = getStage(balance, state.run.stage);
   const enemyBoard = createEnemyBoard(state, balance, stage);
@@ -329,7 +341,7 @@ export function runCombatRound(state, balance) {
   const healthByCombatId = createHealthByCombatId(state, balance, enemyBoard, attackEvents);
   const variance = 0.92 + nextRandom(state) * 0.16;
   const adjustedPower = teamPower * variance;
-  const won = adjustedPower >= stage.enemyPower && boardUnitCount(state) > 0;
+  const won = adjustedPower >= stage.enemyPower;
   const previousStage = state.run.stage;
   const round = state.run.round;
   const totalRound = state.run.totalRounds;
