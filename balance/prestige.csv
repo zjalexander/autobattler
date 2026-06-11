@@ -1,0 +1,8 @@
+key,value
+minStage,8
+stageExponent,1.55
+prestigeDivisor,18
+startingGoldPerPoint,1
+powerPercentPerPoint,2
+offlineCapSecondsBase,3600
+offlineCapSecondsPerPoint,420

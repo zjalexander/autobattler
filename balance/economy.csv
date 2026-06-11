@@ -1,0 +1,17 @@
+key,value
+startingGold,10
+roundSeconds,4
+baseWinGold,3
+lossGold,1
+rerollCost,2
+xpBuyCost,4
+xpPerBuy,4
+xpPerRound,1
+benchCap,8
+shopSize,4
+itemShopSize,3
+itemRefreshCost,2
+itemSlotBaseCost,8
+itemSlotCostGrowth,1.7
+maxItemSlots,6
+sellRefundRate,0.75

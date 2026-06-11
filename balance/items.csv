@@ -1,0 +1,9 @@
+id,name,cost,rarity,stat,value,mode,effect
+iron_blade,Iron Blade,3,common,attack,3,add,All units gain attack.
+warding_plate,Warding Plate,3,common,defense,2,add,All units gain defense.
+vital_seed,Vital Seed,3,common,health,18,add,All units gain maximum health.
+focus_lens,Focus Lens,4,uncommon,abilityPower,5,add,All units gain ability power.
+tempo_boots,Tempo Boots,4,uncommon,speed,5,percent,All units gain attack speed.
+ember_core,Ember Core,5,rare,attack,7,add,All units gain heavy attack.
+verdant_charm,Verdant Charm,5,rare,health,38,add,All units gain heavy maximum health.
+mirror_gear,Mirror Gear,6,rare,defense,5,add,All units gain heavy defense.

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Idle Formation</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div>
+          <h1>Idle Formation</h1>
+          <p id="save-status">Loading balance data...</p>
+        </div>
+        <div class="stats-strip" aria-label="Run stats">
+          <span><strong id="gold">0</strong><small>Gold</small></span>
+          <span><strong id="level">1</strong><small>Level</small></span>
+          <span><strong id="stage">1</strong><small>Stage</small></span>
+          <span><strong id="prestige-points">0</strong><small>Prestige</small></span>
+        </div>
+        <div class="top-actions">
+          <button id="save-button" type="button" title="Save progress">Save</button>
+          <button id="export-button" type="button" title="Export save text">Export</button>
+          <button id="import-button" type="button" title="Import save text">Import</button>
+          <button id="reset-button" type="button" title="Reset local save">Reset</button>
+        </div>
+      </header>
+
+      <section id="offline-summary" class="notice" hidden></section>
+
+      <nav class="window-dock" aria-label="Management windows">
+        <button type="button" data-window-toggle="store-window">Unit Store</button>
+        <button type="button" data-window-toggle="item-window">Item Store</button>
+        <button type="button" data-window-toggle="inventory-window">Inventory</button>
+        <button type="button" data-window-toggle="bench-window">Bench <span id="bench-count">0/8</span></button>
+      </nav>
+
+      <main class="layout">
+        <section class="panel board-panel" aria-labelledby="board-heading">
+          <div class="panel-header">
+            <h2 id="board-heading">Board</h2>
+            <div class="round-meter">
+              <span id="round-label">Next combat</span>
+              <progress id="round-progress" value="0" max="1"></progress>
+            </div>
+          </div>
+          <div id="board" class="board-grid" aria-label="Active board"></div>
+          <div class="panel-header enemy-header">
+            <h2>Enemy Team</h2>
+            <span class="subtle">Latest combat formation</span>
+          </div>
+          <div id="enemy-board" class="board-grid enemy-grid" aria-label="Enemy board"></div>
+        </section>
+      </main>
+
+      <section class="window-layer" aria-label="Open management windows">
+        <section id="store-window" class="app-window" data-window hidden>
+          <div class="window-titlebar">
+            <h2 id="shop-heading">Unit Store</h2>
+            <button type="button" data-window-close="store-window" aria-label="Close unit store">Close</button>
+          </div>
+          <div class="inline-actions window-actions">
+            <button id="xp-button" type="button" title="Buy XP">XP</button>
+            <button id="reroll-button" type="button" title="Refresh units">Reroll</button>
+            <button id="lock-button" type="button" title="Keep this shop">Lock</button>
+          </div>
+          <div id="xp-label" class="subtle"></div>
+          <div id="shop" class="shop-list"></div>
+        </section>
+
+        <section id="item-window" class="app-window" data-window hidden>
+          <div class="window-titlebar">
+            <h2>Item Store</h2>
+            <button type="button" data-window-close="item-window" aria-label="Close item store">Close</button>
+          </div>
+          <div class="window-actions">
+            <button id="item-refresh-button" type="button" title="Refresh items">Refresh</button>
+          </div>
+          <div id="item-shop" class="shop-list compact"></div>
+        </section>
+
+        <section id="inventory-window" class="app-window" data-window hidden>
+          <div class="window-titlebar">
+            <h2>Inventory</h2>
+            <button type="button" data-window-close="inventory-window" aria-label="Close inventory">Close</button>
+          </div>
+          <div class="slot-upgrade-row">
+            <span id="item-slot-label" class="subtle">Item slots 0/0</span>
+            <button id="item-slot-button" type="button">Buy Slot</button>
+          </div>
+          <div id="item-slots" class="item-slots"></div>
+          <div id="inventory" class="inventory-list"></div>
+        </section>
+
+        <section id="bench-window" class="app-window" data-window hidden>
+          <div class="window-titlebar">
+            <h2>Bench</h2>
+            <button type="button" data-window-close="bench-window" aria-label="Close bench">Close</button>
+          </div>
+          <div id="bench" class="bench-list" aria-label="Bench units"></div>
+        </section>
+      </section>
+
+      <section class="bottom-layout">
+        <section class="panel recap-panel" aria-labelledby="recap-heading">
+          <div class="panel-header">
+            <h2 id="recap-heading">Combat Recap</h2>
+            <span id="team-power" class="pill"></span>
+          </div>
+          <div id="recap"></div>
+        </section>
+
+        <section class="panel prestige-panel" aria-labelledby="prestige-heading">
+          <div class="panel-header">
+            <h2 id="prestige-heading">Prestige</h2>
+          </div>
+          <div id="prestige-summary"></div>
+          <button id="prestige-button" type="button">Prestige</button>
+        </section>
+      </section>
+    </div>
+
+    <dialog id="save-dialog">
+      <form method="dialog">
+        <h2 id="dialog-title">Save Data</h2>
+        <textarea id="save-text" spellcheck="false"></textarea>
+        <div class="dialog-actions">
+          <button id="dialog-cancel" value="cancel" type="submit">Close</button>
+          <button id="dialog-apply" value="apply" type="button">Apply Import</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

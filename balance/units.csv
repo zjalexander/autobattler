@@ -1,0 +1,13 @@
+id,name,cost,tier,traits,role,health,attack,defense,speed,ability,abilityPower
+ember_squire,Ember Squire,1,1,guardian|spark,Tank,130,12,6,1.00,Shields the weakest ally,8
+vine_archer,Vine Archer,1,1,verdant|ranger,Carry,90,17,2,1.15,Fires a piercing shot,6
+gear_mender,Gear Mender,1,1,artificer|guardian,Support,105,10,4,1.00,Repairs the front line,12
+dusk_cutpurse,Dusk Cutpurse,1,1,shadow|ranger,Carry,82,20,1,1.25,Strikes the back row,5
+spark_acolyte,Spark Acolyte,2,2,spark|arcanist,Carry,92,15,2,1.05,Charges a chain bolt,16
+bark_guard,Bark Guard,2,2,verdant|guardian,Tank,165,11,8,0.88,Roots nearby enemies,6
+brass_lancer,Brass Lancer,2,2,artificer|ranger,Bruiser,122,18,5,1.05,Overclocks attacks,8
+night_oracle,Night Oracle,2,2,shadow|arcanist,Support,95,12,3,1.00,Weakens the enemy carry,18
+storm_knight,Storm Knight,3,3,guardian|spark,Bruiser,180,22,9,0.95,Slams the front line,14
+wild_sage,Wild Sage,3,3,verdant|arcanist,Support,130,13,4,1.00,Grows teamwide power,24
+clockwork_mage,Clockwork Mage,3,3,artificer|arcanist,Carry,112,18,3,1.00,Fires a scaling spell,28
+umbra_duelist,Umbra Duelist,3,3,shadow|ranger,Carry,118,28,3,1.35,Executes weakened targets,10

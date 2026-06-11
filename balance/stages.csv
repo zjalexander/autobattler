@@ -1,0 +1,16 @@
+stage,enemyPower,goldReward,itemEvery,notes
+1,34,1,4,Opening scout
+2,48,1,4,Early skirmish
+3,66,2,4,First trait check
+4,90,2,4,Frontline check
+5,122,3,4,Item check
+6,162,3,4,Upgrade check
+7,212,4,4,Midgame wall
+8,275,4,4,Carry check
+9,350,5,4,Synergy check
+10,440,5,4,First prestige target
+11,545,6,4,Deep run
+12,665,6,4,Scaling wall
+13,805,7,4,High pressure
+14,965,7,4,Capstone check
+15,1150,8,4,Prestige push

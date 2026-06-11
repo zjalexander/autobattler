@@ -1,0 +1,8 @@
+id,name,breakpoints,stat,mode,target,description
+guardian,Guardian,2:6;4:16;6:32,defense,add,all,Allies gain defense.
+spark,Spark,2:10;4:24;6:48,attack,percent,all,Allies gain attack.
+verdant,Verdant,2:45;4:120;6:240,health,add,all,Allies gain maximum health.
+artificer,Artificer,2:5;4:14;6:30,attack,add,all,Allies gain flat attack from crafted gear.
+shadow,Shadow,2:12;4:30;6:60,attack,percent,trait,Shadow units gain attack.
+arcanist,Arcanist,2:14;4:36;6:72,abilityPower,add,trait,Arcanists gain ability power.
+ranger,Ranger,2:8;4:22;6:44,speed,percent,trait,Rangers gain attack speed.
