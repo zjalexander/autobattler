@@ -14,8 +14,12 @@ import {
   createInitialState,
   estimatePrestigeGain,
   fieldUnit,
+  moveBenchUnitToBoard,
+  moveBoardUnit,
+  moveBoardUnitToBench,
   prestigeReset,
   processElapsed,
+  reorderBenchUnit,
   runCombatRound,
 } from "../src/game.js";
 
@@ -99,6 +103,41 @@ test("stage round counter resets on stage win and stage loss", async () => {
   assert.equal(lossRecap.won, false);
   assert.equal(state.run.stage, 3);
   assert.equal(state.run.round, 1);
+});
+
+test("drag movement helpers rearrange board and bench units", async () => {
+  const balance = await loadTestBalance();
+  const state = createInitialState(balance);
+  state.run.gold = 99;
+  state.run.shop = ["ember_squire", "gear_mender", "bark_guard", "vine_archer"];
+
+  assert.equal(buyShopUnit(state, balance, 0).ok, true);
+  assert.equal(buyShopUnit(state, balance, 1).ok, true);
+  assert.equal(buyShopUnit(state, balance, 2).ok, true);
+
+  const firstBoardId = state.run.board[0].instanceId;
+  const secondBoardId = state.run.board[1].instanceId;
+  const benchId = state.run.bench[0].instanceId;
+
+  assert.equal(moveBoardUnit(state, 0, 1).ok, true);
+  assert.equal(state.run.board[0].instanceId, secondBoardId);
+  assert.equal(state.run.board[1].instanceId, firstBoardId);
+
+  const cappedDrop = moveBenchUnitToBoard(state, balance, 0, 2);
+  assert.equal(cappedDrop.ok, false);
+  assert.equal(state.run.bench[0].instanceId, benchId);
+
+  state.run.level = 2;
+  assert.equal(moveBenchUnitToBoard(state, balance, 0, 2).ok, true);
+  assert.equal(state.run.board[2].instanceId, benchId);
+  assert.equal(state.run.bench.length, 0);
+
+  assert.equal(moveBoardUnitToBench(state, balance, 0).ok, true);
+  assert.equal(moveBoardUnitToBench(state, balance, 1).ok, true);
+  assert.deepEqual(state.run.bench.map((unit) => unit.instanceId), [secondBoardId, firstBoardId]);
+
+  assert.equal(reorderBenchUnit(state, 0, 1).ok, true);
+  assert.deepEqual(state.run.bench.map((unit) => unit.instanceId), [firstBoardId, secondBoardId]);
 });
 
 test("items use purchased global item slots instead of unit equipment", async () => {

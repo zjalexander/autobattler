@@ -21,13 +21,16 @@ import {
   getOfflineCapSeconds,
   getPreviewEnemyBoard,
   migrateState,
+  moveBenchUnitToBoard,
+  moveBoardUnit,
+  moveBoardUnitToBench,
   prestigeReset,
   processElapsed,
   processOffline,
+  reorderBenchUnit,
   refreshItemShop,
   rollShop,
   sellUnit,
-  swapBoardUnits,
   toggleShopLock,
 } from "./game.js";
 import { clearSave, loadSave, saveGame } from "./storage.js";
@@ -42,6 +45,7 @@ let lastAutosaveAt = 0;
 let lastAnimatedRound = 0;
 let combatAnimationToken = 0;
 let combatAnimating = false;
+let activeDragPayload = null;
 
 const els = {
   saveStatus: document.querySelector("#save-status"),
@@ -108,6 +112,11 @@ async function init() {
 function attachEvents() {
   document.body.addEventListener("click", handleClick);
   document.body.addEventListener("change", handleChange);
+  document.body.addEventListener("dragstart", handleDragStart);
+  document.body.addEventListener("dragover", handleDragOver);
+  document.body.addEventListener("dragleave", handleDragLeave);
+  document.body.addEventListener("drop", handleDrop);
+  document.body.addEventListener("dragend", handleDragEnd);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       saveGame(state);
@@ -164,15 +173,7 @@ async function handleClick(event) {
   else if (action === "field-slot") result = fieldUnit(state, balance, 0, Number(button.dataset.slot));
   else if (action === "bench-unit") result = benchUnit(state, balance, Number(button.dataset.slot));
   else if (action === "sell-unit") result = sellUnit(state, balance, button.dataset.location, Number(button.dataset.index));
-  else if (action === "swap-left") {
-    const slot = Number(button.dataset.slot);
-    swapBoardUnits(state, slot, slot - 1);
-    result = { ok: true, message: "Unit shifted left." };
-  } else if (action === "swap-right") {
-    const slot = Number(button.dataset.slot);
-    swapBoardUnits(state, slot, slot + 1);
-    result = { ok: true, message: "Unit shifted right." };
-  } else if (action === "buy-item") result = buyItem(state, balance, Number(button.dataset.index));
+  else if (action === "buy-item") result = buyItem(state, balance, Number(button.dataset.index));
   else if (button === els.dialogApply) {
     applyImport();
     return;
@@ -192,6 +193,125 @@ async function handleChange(event) {
   setStatus(result.message);
   await saveGame(state);
   render(true);
+}
+
+function handleDragStart(event) {
+  if (!(event.target instanceof Element)) return;
+  if (event.target.closest("button, select, textarea")) {
+    event.preventDefault();
+    return;
+  }
+
+  const tile = event.target.closest("[data-drag-source]");
+  if (!tile || !event.dataTransfer) return;
+
+  activeDragPayload = {
+    source: tile.dataset.dragSource,
+    boardSlot: tile.dataset.boardSlot === undefined ? null : Number(tile.dataset.boardSlot),
+    benchIndex: tile.dataset.benchIndex === undefined ? null : Number(tile.dataset.benchIndex),
+  };
+
+  tile.classList.add("dragging");
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("application/json", JSON.stringify(activeDragPayload));
+  event.dataTransfer.setData("text/plain", JSON.stringify(activeDragPayload));
+}
+
+function handleDragOver(event) {
+  const dropZone = getDropZone(event.target);
+  if (!dropZone || !canDropOnZone(activeDragPayload, dropZone)) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+  setActiveDropZone(dropZone);
+}
+
+function handleDragLeave(event) {
+  const dropZone = getDropZone(event.target);
+  if (!dropZone || dropZone.contains(event.relatedTarget)) return;
+  dropZone.classList.remove("drag-over");
+}
+
+async function handleDrop(event) {
+  const dropZone = getDropZone(event.target);
+  const payload = getDragPayload(event);
+  if (!dropZone || !canDropOnZone(payload, dropZone)) return;
+
+  event.preventDefault();
+  clearDragState();
+  const result = applyDraggedUnitDrop(payload, dropZone);
+  if (!result) return;
+
+  setStatus(result.message);
+  if (result.ok) await saveGame(state);
+  render(true);
+}
+
+function handleDragEnd() {
+  clearDragState();
+}
+
+function getDropZone(target) {
+  return target instanceof Element ? target.closest("[data-drop-zone]") : null;
+}
+
+function getDragPayload(event) {
+  if (activeDragPayload) return activeDragPayload;
+  const raw = event.dataTransfer?.getData("application/json") || event.dataTransfer?.getData("text/plain");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function canDropOnZone(payload, dropZone) {
+  if (!payload || !dropZone) return false;
+  if (dropZone.dataset.dropZone === "board") {
+    const targetSlot = Number(dropZone.dataset.slot);
+    if (!Number.isInteger(targetSlot)) return false;
+    if (payload.source === "board") return payload.boardSlot !== targetSlot;
+    if (payload.source === "bench") {
+      const targetOccupied = Boolean(state.run.board[targetSlot]);
+      const canField = boardUnitCount() < getCurrentLevel(balance, state).boardCap;
+      return targetOccupied || canField;
+    }
+  }
+  if (dropZone.dataset.dropZone === "bench") {
+    if (payload.source === "board") return state.run.bench.length < balance.economy.benchCap;
+    if (payload.source === "bench") return state.run.bench.length > 1;
+  }
+  return false;
+}
+
+function setActiveDropZone(dropZone) {
+  for (const element of document.querySelectorAll(".drag-over")) {
+    if (element !== dropZone) element.classList.remove("drag-over");
+  }
+  dropZone.classList.add("drag-over");
+}
+
+function clearDragState() {
+  activeDragPayload = null;
+  for (const element of document.querySelectorAll(".dragging, .drag-over")) {
+    element.classList.remove("dragging", "drag-over");
+  }
+}
+
+function applyDraggedUnitDrop(payload, dropZone) {
+  if (dropZone.dataset.dropZone === "board") {
+    const targetSlot = Number(dropZone.dataset.slot);
+    if (payload.source === "board") return moveBoardUnit(state, payload.boardSlot, targetSlot);
+    if (payload.source === "bench") return moveBenchUnitToBoard(state, balance, payload.benchIndex, targetSlot);
+  }
+
+  if (dropZone.dataset.dropZone === "bench") {
+    const targetIndex = dropZone.dataset.benchIndex === undefined ? state.run.bench.length : Number(dropZone.dataset.benchIndex);
+    if (payload.source === "board") return moveBoardUnitToBench(state, balance, payload.boardSlot, targetIndex);
+    if (payload.source === "bench") return reorderBenchUnit(state, payload.benchIndex, targetIndex);
+  }
+
+  return null;
 }
 
 function tick() {
@@ -259,7 +379,7 @@ function render(force = false) {
 function renderBoard() {
   const traitState = computeTraitState(state, balance);
   els.board.innerHTML = state.run.board.map((instance, slot) => `
-    <div class="slot">
+    <div class="slot" data-drop-zone="board" data-slot="${slot}">
       <div class="slot-label">${BOARD_LABELS[slot]}</div>
       ${instance ? renderUnitTile(instance, {
         location: "board",
@@ -434,8 +554,11 @@ function renderUnitTile(instance, options) {
   const stats = computeUnitStats(instance, state, balance, options.traitState);
   const hp = getHpSnapshot(instance.instanceId, stats.health);
   const isBoard = options.location === "board";
+  const dragAttributes = isBoard
+    ? `draggable="true" data-drag-source="board" data-board-slot="${options.boardSlot}" title="Drag to rearrange board position"`
+    : `draggable="true" data-drag-source="bench" data-bench-index="${options.index}" data-drop-zone="bench" title="Drag to field or reorder bench unit"`;
   return `
-    <article class="unit-tile ${isBoard ? "board-unit combatant" : ""}" ${isBoard ? `data-combat-id="${escapeHtml(instance.instanceId)}"` : ""}>
+    <article class="unit-tile ${isBoard ? "board-unit combatant" : ""}" ${isBoard ? `data-combat-id="${escapeHtml(instance.instanceId)}"` : ""} ${dragAttributes}>
       <div class="unit-top">
         <span class="unit-name">${escapeHtml(unit.name)} ${"*".repeat(instance.starLevel)}</span>
         <span class="unit-meta">${unit.cost}g | ${escapeHtml(unit.role)}</span>
@@ -446,8 +569,6 @@ function renderUnitTile(instance, options) {
       <div class="unit-actions">
         ${isBoard ? `
           <button type="button" data-action="bench-unit" data-slot="${options.boardSlot}">Bench</button>
-          <button type="button" data-action="swap-left" data-slot="${options.boardSlot}" ${options.boardSlot <= 0 ? "disabled" : ""}>Left</button>
-          <button type="button" data-action="swap-right" data-slot="${options.boardSlot}" ${options.boardSlot >= state.run.board.length - 1 ? "disabled" : ""}>Right</button>
           <button type="button" data-action="sell-unit" data-location="board" data-index="${options.index}">Sell</button>
         ` : `
           <button type="button" data-action="field-unit" data-index="${options.index}" ${boardUnitCount() >= getCurrentLevel(balance, state).boardCap ? "disabled" : ""}>Field</button>

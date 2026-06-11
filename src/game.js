@@ -144,6 +144,62 @@ export function swapBoardUnits(state, firstSlot, secondSlot) {
   state.run.board[secondSlot] = first;
 }
 
+export function moveBoardUnit(state, fromSlot, toSlot) {
+  const from = Number(fromSlot);
+  const to = Number(toSlot);
+  if (!isBoardSlot(from) || !isBoardSlot(to)) return { ok: false, message: "Invalid board slot." };
+  if (!state.run.board[from]) return { ok: false, message: "No unit in that board slot." };
+  if (from === to) return { ok: true, message: "Unit position unchanged." };
+  swapBoardUnits(state, from, to);
+  return { ok: true, message: "Unit moved." };
+}
+
+export function moveBenchUnitToBoard(state, balance, benchIndex, slotIndex) {
+  const from = Number(benchIndex);
+  const to = Number(slotIndex);
+  if (!Number.isInteger(from) || from < 0 || from >= state.run.bench.length) return { ok: false, message: "Bench unit not found." };
+  if (!isBoardSlot(to)) return { ok: false, message: "Invalid board slot." };
+
+  const benchUnit = state.run.bench[from];
+  const boardUnit = state.run.board[to];
+  if (boardUnit) {
+    state.run.board[to] = benchUnit;
+    state.run.bench[from] = boardUnit;
+    return { ok: true, message: "Board and bench units swapped." };
+  }
+
+  if (boardUnitCount(state) >= getCurrentLevel(balance, state).boardCap) {
+    return { ok: false, message: "Board cap reached. Level up to field more units." };
+  }
+
+  state.run.bench.splice(from, 1);
+  state.run.board[to] = benchUnit;
+  return { ok: true, message: "Unit moved to board." };
+}
+
+export function moveBoardUnitToBench(state, balance, slotIndex, benchIndex = state.run.bench.length) {
+  const from = Number(slotIndex);
+  if (!isBoardSlot(from)) return { ok: false, message: "Invalid board slot." };
+  const unit = state.run.board[from];
+  if (!unit) return { ok: false, message: "No unit in that board slot." };
+  if (state.run.bench.length >= balance.economy.benchCap) return { ok: false, message: "Bench is full." };
+
+  const to = clamp(Number(benchIndex), 0, state.run.bench.length);
+  state.run.board[from] = null;
+  unit.boardPosition = null;
+  state.run.bench.splice(to, 0, unit);
+  return { ok: true, message: "Unit moved to bench." };
+}
+
+export function reorderBenchUnit(state, fromIndex, toIndex = state.run.bench.length - 1) {
+  const from = Number(fromIndex);
+  if (!Number.isInteger(from) || from < 0 || from >= state.run.bench.length) return { ok: false, message: "Bench unit not found." };
+  const [unit] = state.run.bench.splice(from, 1);
+  const to = clamp(Number(toIndex), 0, state.run.bench.length);
+  state.run.bench.splice(to, 0, unit);
+  return { ok: true, message: from === to ? "Bench order unchanged." : "Bench order updated." };
+}
+
 export function sellUnit(state, balance, location, index) {
   const unit = location === "board" ? state.run.board[index] : state.run.bench[index];
   if (!unit) return { ok: false, message: "Unit not found." };
@@ -646,6 +702,10 @@ function countUnits(state) {
 
 function firstEmptyBoardSlot(state) {
   return state.run.board.findIndex((slot) => slot === null);
+}
+
+function isBoardSlot(slotIndex) {
+  return Number.isInteger(slotIndex) && slotIndex >= 0 && slotIndex < BOARD_SIZE;
 }
 
 function normalizeBoard(board) {
