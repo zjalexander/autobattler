@@ -494,6 +494,78 @@ progress {
   background: #fff8e9;
 }
 
+.shop-card {
+  border-left-width: 4px;
+}
+
+.shop-tier-1 {
+  border-left-color: #5d8b6a;
+}
+
+.shop-tier-2 {
+  border-left-color: #b7791f;
+}
+
+.shop-tier-3 {
+  border-left-color: #3d6f99;
+}
+
+.shop-unaffordable {
+  background: #f4f5f1;
+}
+
+.shop-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.tier-badge,
+.owned-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tier-1 {
+  background: #e4f0e6;
+  color: #275c35;
+}
+
+.tier-2 {
+  background: #fff0d5;
+  color: #80500d;
+}
+
+.tier-3 {
+  background: #dfeefa;
+  color: #245172;
+}
+
+.owned-pill {
+  background: #ecefe7;
+  color: #3b4650;
+}
+
+.shop-hint {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.shop-hint.synergy-hit {
+  color: #7a470b;
+  font-weight: 700;
+}
+
 .unit-actions,
 .item-actions {
   display: flex;

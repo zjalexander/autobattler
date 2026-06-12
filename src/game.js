@@ -478,6 +478,12 @@ export function allUnits(state) {
   return [...state.run.board.filter(Boolean), ...state.run.bench];
 }
 
+export function countOwnedUnitCopies(state, unitId) {
+  return allUnits(state)
+    .filter((instance) => instance.unitId === unitId)
+    .reduce((total, instance) => total + Math.pow(3, Math.max(0, instance.starLevel - 1)), 0);
+}
+
 export function getPreviewEnemyBoard(state, balance) {
   if (state.run.recap?.enemyBoard?.some(Boolean)) return state.run.recap.enemyBoard;
   if (state.run.enemyBoard?.some(Boolean)) return state.run.enemyBoard;

@@ -11,6 +11,7 @@ import {
   computeTeamPower,
   computeTraitState,
   computeUnitStats,
+  countOwnedUnitCopies,
   createInitialState,
   estimatePrestigeGain,
   fieldUnit,
@@ -57,6 +58,23 @@ test("shop purchases can build active trait synergies", async () => {
   assert.ok(guardian.count >= 2);
   assert.equal(guardian.active.count, 2);
   assert.ok(computeTeamPower(state, balance) > 0);
+});
+
+test("owned unit copy counts include upgraded stars", async () => {
+  const balance = await loadTestBalance();
+  const state = createInitialState(balance);
+  state.run.gold = 99;
+  state.run.level = 3;
+  state.run.shop = ["ember_squire", "ember_squire", "ember_squire", "ember_squire"];
+
+  assert.equal(countOwnedUnitCopies(state, "ember_squire"), 0);
+  assert.equal(buyShopUnit(state, balance, 0).ok, true);
+  assert.equal(countOwnedUnitCopies(state, "ember_squire"), 1);
+  assert.equal(buyShopUnit(state, balance, 1).ok, true);
+  assert.equal(countOwnedUnitCopies(state, "ember_squire"), 2);
+  assert.equal(buyShopUnit(state, balance, 2).ok, true);
+  assert.equal(countOwnedUnitCopies(state, "ember_squire"), 3);
+  assert.equal(state.run.board.find(Boolean).starLevel, 2);
 });
 
 test("continuous combat advances exact rounds from elapsed time", async () => {

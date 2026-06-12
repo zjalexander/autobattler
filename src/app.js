@@ -9,6 +9,7 @@ import {
   computeTeamPower,
   computeTraitState,
   computeUnitStats,
+  countOwnedUnitCopies,
   createInitialState,
   estimatePrestigeGain,
   fieldUnit,
@@ -419,25 +420,59 @@ function renderWindowButtons() {
 }
 
 function renderShop() {
-  const currentTraits = new Set(computeTraitState(state, balance).filter((entry) => entry.active || entry.count > 0).map((entry) => entry.trait.id));
+  const traitState = computeTraitState(state, balance);
+  const currentTraits = new Set(traitState.filter((entry) => entry.active || entry.count > 0).map((entry) => entry.trait.id));
   els.shop.innerHTML = state.run.shop.map((unitId, index) => {
     if (!unitId) return `<article class="unit-tile"><div class="subtle">Purchased</div></article>`;
     const unit = balance.unitById[unitId];
-    const completes = unit.traits.some((traitId) => currentTraits.has(traitId));
+    const matchingTraits = unit.traits.filter((traitId) => currentTraits.has(traitId));
+    const completes = matchingTraits.length > 0;
+    const affordable = state.run.gold >= unit.cost;
+    const ownedCopies = countOwnedUnitCopies(state, unit.id);
+    const ownedLabel = formatOwnedCopies(ownedCopies);
+    const synergyLabel = formatShopSynergy(unit, matchingTraits, traitState);
     return `
-      <article class="unit-tile ${completes ? "shop-completes" : ""}">
+      <article class="unit-tile shop-card shop-tier-${unit.tier} ${completes ? "shop-completes" : ""} ${affordable ? "shop-affordable" : "shop-unaffordable"}">
         <div class="unit-top">
           <span class="unit-name">${escapeHtml(unit.name)}</span>
-          <span class="unit-meta">${unit.cost}g | T${unit.tier}</span>
+          <span class="tier-badge tier-${unit.tier}">T${unit.tier}</span>
         </div>
-        <div class="unit-meta">${escapeHtml(unit.role)} | ${escapeHtml(unit.ability)}</div>
+        <div class="shop-info-row">
+          <span class="owned-pill">${escapeHtml(ownedLabel)}</span>
+          <span class="unit-meta">${unit.cost}g | ${escapeHtml(unit.role)}</span>
+        </div>
+        <div class="unit-meta">${escapeHtml(unit.ability)}</div>
+        <div class="shop-hint ${completes ? "synergy-hit" : ""}">${escapeHtml(synergyLabel)}</div>
         <div class="chips">${unit.traits.map((traitId) => traitChip(traitId)).join("")}</div>
         <div class="unit-actions">
-          <button type="button" data-action="buy-unit" data-index="${index}" ${state.run.gold < unit.cost ? "disabled" : ""}>Buy</button>
+          <button type="button" data-action="buy-unit" data-index="${index}" ${affordable ? "" : "disabled"}>Buy ${unit.cost}g</button>
         </div>
       </article>
     `;
   }).join("");
+}
+
+function formatOwnedCopies(copies) {
+  if (copies >= 9) return `Owned ${copies} | 3-star ready`;
+  if (copies >= 3) return `Owned ${copies}/9`;
+  return `Owned ${copies}/3`;
+}
+
+function formatShopSynergy(unit, matchingTraits, traitState) {
+  if (matchingTraits.length === 0) {
+    return `New traits: ${unit.traits.map((traitId) => balance.traitById[traitId]?.name ?? traitId).join(", ")}`;
+  }
+
+  const activations = matchingTraits.filter((traitId) => {
+    const entry = traitState.find((candidate) => candidate.trait.id === traitId);
+    return entry?.next && entry.count + 1 >= entry.next.count;
+  });
+
+  if (activations.length > 0) {
+    return `Activates: ${activations.map((traitId) => balance.traitById[traitId]?.name ?? traitId).join(", ")}`;
+  }
+
+  return `Links with: ${matchingTraits.map((traitId) => balance.traitById[traitId]?.name ?? traitId).join(", ")}`;
 }
 
 function renderItemShop() {
